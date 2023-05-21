@@ -1,24 +1,6 @@
+get CURSOR
 x: 1, y: 3 
 Return: 2 
-x: 12, y: 3 
-Return: 2 
-x: 11, y: 3 
-Return: 2 
-x: 10, y: 3 
-Return: 2 
-x: 9, y: 3 
-Return: 2 
-x: 10, y: 3 
-Return: 2 
-x: 11, y: 3 
-Return: 2 
-x: 12, y: 3 
-Return: 2 
-x: 12, y: 3 
-Return: 2 
-x: 12, y: 3 
-Return: 2 
-x: 11, y: 3 
-Return: 2 
-x: 10, y: 3 
-Return: 2 
+WE ARE RESIZING!
+WE ARE RESIZING!
+WE ARE RESIZING!

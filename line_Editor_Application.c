@@ -1,12 +1,12 @@
 #include <ctype.h>
 #include <fcntl.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/wait.h>
 #include <termios.h>
 #include <unistd.h>
-
 // TODO make these coments shorter
 typedef struct LineData {
   int cursorStartPos; // The start position that the cursor assumes with every
@@ -21,12 +21,16 @@ typedef struct LineData {
 FILE *file;
 /*Moves the cursor to the given x and y variable*/
 void moveCursor(int x, int y) {
- int len = 100;
-    char str[len];
+  int len = 100;
+  char str[len];
 
-    sprintf(str, "\033[%d;%dH", y, x);
+  // fprintf(file, "MOVE CURSOR\n");
+  // fprintf(file, "x: %d, y: %d \n", x, y);
 
-    write(STDOUT_FILENO, str, strlen(str));
+  // Escape char sequence that makes the terminal move; Look at man pages
+  sprintf(str, "\033[%d;%dH", y, x);
+
+  write(STDOUT_FILENO, str, strlen(str));
 }
 
 /*
@@ -35,10 +39,15 @@ void moveCursor(int x, int y) {
 */
 int getCursor(int *x, int *y) {
   char buf[100];
+
+  // Due to a race condition where a keypress may be written to the stdin stream
+  // before the terminal response, we use an 'auxiliary' buffer, unhandledBuff,
+  // to store any unhandled keypresses that may have been written in.
+  char unhandledBuff[6];
   int i = 0;
   // queries the terminal for cursor position status
   write(STDOUT_FILENO, "\33[6n", 5);
-  // fprintf(file, "get CURSOR\n");
+  fprintf(file, "get CURSOR\n");
   //  Terminal sends response to stdin and we need to read it in
   while (i < sizeof(buf) - 1) {
     read(STDIN_FILENO, &buf[i], 1);
@@ -85,18 +94,22 @@ void handleCursorControl(char z, LineData *linedata) {
   read(STDIN_FILENO, &c, 1); // Now we can read in which key was pressed
   getCursor(&x, &y);
   switch (c) {
-    case 'C' :// Move cursor right
-      if (linedata->lineEndPos == x) {return;} // don't want to move cursor back more
-      x++;
-      moveCursor(x, y); 
-      break;
-    case 'D': // Move cursor left
-      if (linedata->cursorStartPos == x) {return;} // don't want to move cursor further more
-      x--;
-      moveCursor(x, y);
-      break;
-    default:
-      break;
+  case 'C': // Move cursor right
+    if (linedata->lineEndPos == x) {
+      return;
+    } // don't want to move cursor back more
+    x++;
+    moveCursor(x, y);
+    break;
+  case 'D': // Move cursor left
+    if (linedata->cursorStartPos == x) {
+      return;
+    } // don't want to move cursor further more
+    x--;
+    moveCursor(x, y);
+    break;
+  default:
+    break;
   }
 }
 
@@ -108,16 +121,35 @@ void endLineEdit(struct termios oldt) {
   exit(0);
 }
 
+/* Handles the nescarry updates to display when terimnal
+  when the resize signal is recieved; 
+*/
+void terminalResizeSigHandler(int) {
+  fprintf(file, "WE ARE RESIZING!\n");
+
+}
 // Todo make it add the change to the input buffer
 void handleNonControlChar(char c, LineData *linedata) {
   linedata->lineEndPos++;
   write(STDOUT_FILENO, &c, 1); // Non-control characters;
 }
-
+#include <signal.h>
 // Todo I need to add a bufffer and then deletion powers
 int main(void) {
   struct termios oldt, newt;
   tcgetattr(STDIN_FILENO, &oldt);
+
+  // struct sigaction act = {0}; // struct for the sigaction sys call
+  // act.sa_handler = NULL;
+
+  struct sigaction act = {0};
+  act.sa_handler = terminalResizeSigHandler;
+  
+  // The signal called 'sigwinch' is sent to this proccess when the
+  // terminal window size is changed, thus we need to relect this
+  // change internaly;
+  sigaction(SIGWINCH, &act, NULL);
+
 
   // Todo what happens when the user types more chars than the buffer has enough
   // to hold? Todo put This in an initilizer
