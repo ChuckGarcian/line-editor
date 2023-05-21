@@ -73,14 +73,32 @@ void handleDeletion(LineData *linedata) {
   int col, row;
   col = linedata->curP.x;
   row = linedata->curP.y;
-  if (linedata->initP.x == col)
+  if (linedata->initP.x == col && linedata->initP.y == row)
     return; // don't want to move cursor back more
   col--;
-  moveCursor(col, row); // Move cursor right
+  if (col < 1) {
+    col = linedata->ws.ws_col;
+    row--;
+  }
+
+  moveCursor(col, row);
   linedata->curP.x = col;
   linedata->curP.y = row;
   linedata->maxP.x = col;
   linedata->maxP.y = row;
+}
+
+// Todo make it add the change to the input buffer
+void handleNonControlChar(char c, LineData *linedata) {
+  linedata->maxP.x++;
+  linedata->curP.x++; 
+  if (linedata->maxP.x > linedata->ws.ws_col) {// Greater than the terminal col; make cursor new line
+    linedata->maxP.x = 1;
+    linedata->curP.x = 1;
+    linedata->maxP.y++;
+    linedata->curP.y++;
+  }
+  write(STDOUT_FILENO, &c, 1); // Non-control characters;
 }
 
 /*Takes part of a control sequence and handles it; only for cursor control*/
@@ -98,7 +116,7 @@ void handleCursorControl(char z, LineData *linedata) {
       return;
     } // needs to wrap around to line below 
     else if (col == linedata->ws.ws_col && linedata->maxP.y != row) {
-      col = 0;
+      col = 1;
       row++;
     } else {
       col++;
@@ -110,7 +128,7 @@ void handleCursorControl(char z, LineData *linedata) {
     if (linedata->initP.x == col && linedata->initP.y == row) {// don't want to move cursor further more
       return;
     } // cursor needs to wrap around to end of the line above 
-    else if (col == 0 && linedata->initP.y != row) {
+    else if (col == 1 && linedata->initP.y != row) {
       row--;
       col = linedata->ws.ws_col;
 
@@ -147,18 +165,7 @@ void terminalResizeSigHandler(int) {
   fprintf(file, "WE ARE RESIZING!\n");
 
 }
-// Todo make it add the change to the input buffer
-void handleNonControlChar(char c, LineData *linedata) {
-  linedata->maxP.x++;
-  linedata->curP.x++; 
-  if (linedata->maxP.x > linedata->ws.ws_col) {// Greater than the terminal col; make cursor new line
-    linedata->maxP.x = 0;
-    linedata->curP.x = 0;
-    linedata->maxP.y++;
-    linedata->curP.y++;
-  }
-  write(STDOUT_FILENO, &c, 1); // Non-control characters;
-}
+
 /*
 on initlization save the number of characters for 'prefix';
 
@@ -177,6 +184,7 @@ cur_y the current row of the cursor
 
 init_x_y the initial positon of the cursor; cursor may never go any farther left of this position
 */
+
 void initLineEdit(LineData * linedata) {  
   struct termios newt;
   struct sigaction act = {0};
