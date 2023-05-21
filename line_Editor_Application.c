@@ -4,20 +4,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/ioctl.h>
 #include <sys/wait.h>
 #include <termios.h>
 #include <unistd.h>
-// TODO make these coments shorter
-typedef struct LineData {
-  int cursorStartPos; // The start position that the cursor assumes with every
-                      // new line; the cursor may not move any more left of this
-                      // positoin
-  int lineEndPos; // The end position of the current line; cursor may not move
-                  // past this position; increased when keys are typed; dec when
-                  // delete pressed
-  char *buf; // character buffer that getLine() returns when enter is pressed
+#include "line_Editor.h"
 
-} LineData;
 FILE *file;
 /*Moves the cursor to the given x and y variable*/
 void moveCursor(int x, int y) {
@@ -77,40 +69,67 @@ int getCursor(int *x, int *y) {
 }
 
 void handleDeletion(LineData *linedata) {
-  // printf("  YESS");
-  int x, y;
-  getCursor(&x, &y);
-  if (linedata->cursorStartPos == x)
+
+  int col, row;
+  col = linedata->curP.x;
+  row = linedata->curP.y;
+  if (linedata->initP.x == col)
     return; // don't want to move cursor back more
-  x--;
-  moveCursor(x, y); // Move cursor right
+  col--;
+  moveCursor(col, row); // Move cursor right
+  linedata->curP.x = col;
+  linedata->curP.y = row;
+  linedata->maxP.x = col;
+  linedata->maxP.y = row;
 }
 
 /*Takes part of a control sequence and handles it; only for cursor control*/
 void handleCursorControl(char z, LineData *linedata) {
-  int x, y;
+  int col, row;
   char c;
   read(STDIN_FILENO, &c, 1); // To get rid of the '['
   read(STDIN_FILENO, &c, 1); // Now we can read in which key was pressed
-  getCursor(&x, &y);
+  
+  col = linedata->curP.x;
+  row = linedata->curP.y;
   switch (c) {
   case 'C': // Move cursor right
-    if (linedata->lineEndPos == x) {
+    if (linedata->maxP.x == col && linedata->maxP.y == row) { // don't want to move cursor back more
       return;
-    } // don't want to move cursor back more
-    x++;
-    moveCursor(x, y);
+    } // needs to wrap around to line below 
+    else if (col == linedata->ws.ws_col && linedata->maxP.y != row) {
+      col = 0;
+      row++;
+    } else {
+      col++;
+    }
+  
+    moveCursor(col, row);
     break;
   case 'D': // Move cursor left
-    if (linedata->cursorStartPos == x) {
+    if (linedata->initP.x == col && linedata->initP.y == row) {// don't want to move cursor further more
       return;
-    } // don't want to move cursor further more
-    x--;
-    moveCursor(x, y);
+    } // cursor needs to wrap around to end of the line above 
+    else if (col == 0 && linedata->initP.y != row) {
+      row--;
+      col = linedata->ws.ws_col;
+
+    } else {
+      col--;
+    }
+
+   
+    moveCursor(col, row);
+    break;
+  case '\n':
+    fprintf(file, "NEW LINE");
     break;
   default:
     break;
   }
+
+  linedata->curP.x = col;
+  linedata->curP.y = row;
 }
 
 // Sets settings back to their og state
@@ -130,18 +149,36 @@ void terminalResizeSigHandler(int) {
 }
 // Todo make it add the change to the input buffer
 void handleNonControlChar(char c, LineData *linedata) {
-  linedata->lineEndPos++;
+  linedata->maxP.x++;
+  linedata->curP.x++; 
+  if (linedata->maxP.x > linedata->ws.ws_col) {// Greater than the terminal col; make cursor new line
+    linedata->maxP.x = 0;
+    linedata->curP.x = 0;
+    linedata->maxP.y++;
+    linedata->curP.y++;
+  }
   write(STDOUT_FILENO, &c, 1); // Non-control characters;
 }
-#include <signal.h>
-// Todo I need to add a bufffer and then deletion powers
-int main(void) {
-  struct termios oldt, newt;
-  tcgetattr(STDIN_FILENO, &oldt);
+/*
+on initlization save the number of characters for 'prefix';
 
-  // struct sigaction act = {0}; // struct for the sigaction sys call
-  // act.sa_handler = NULL;
+we have a field in the line editor attr struct that maintains the width of the terminal
+^this is changed if the terminal size changes
 
+every move the cursor from typing checks if the position 
+
+we shall mantain 4 values related to the cursor position: 
+
+max_x the max col the cursor is allowed to be; when max_x is equal to the terminal width it shall loop back to zero
+cur_x is the current col the cursor is in;
+
+max_y the max row that the cursor is alloeed to be; when max_x loops over to 0 max_y shall increase by one
+cur_y the current row of the cursor
+
+init_x_y the initial positon of the cursor; cursor may never go any farther left of this position
+*/
+void initLineEdit(LineData * linedata) {  
+  struct termios newt;
   struct sigaction act = {0};
   act.sa_handler = terminalResizeSigHandler;
   
@@ -153,24 +190,39 @@ int main(void) {
 
   // Todo what happens when the user types more chars than the buffer has enough
   // to hold? Todo put This in an initilizer
-  LineData *linedata = malloc(sizeof(LineData));
-  ;
-  linedata->cursorStartPos = 5;
-  linedata->lineEndPos = 5;
+
   linedata->buf = malloc(100);
 
-  newt = oldt;
-  char c;
+  tcgetattr(STDIN_FILENO, &linedata->oldt);
+
+  newt = linedata->oldt;
+
   file = fopen("log.txt", "w");
   setbuf(file, NULL);
-
+  
   cfmakeraw(&newt);
   tcsetattr(STDIN_FILENO, TCSANOW, &newt);
-  int x, y;
-  getCursor(&x, &y);
-  moveCursor(linedata->lineEndPos, y);
 
+  
+  ioctl( STDIN_FILENO, TIOCGWINSZ, &linedata->ws); // Stores terminal window size information into the struct
+  
+  getCursor(&linedata->initP.x, &linedata->initP.y);
+  linedata->maxP.x = linedata->initP.x;
+  linedata->maxP.y = linedata->initP.y;
+  
+  linedata->curP.x = linedata->initP.x;
+  linedata->curP.y = linedata->initP.y;
+}
+#include <signal.h>
+// Todo I need to add a bufffer and then deletion powers
+int main(void) {
+  write(STDOUT_FILENO, "utcsh> ", 8); // to imitate utcsh
+  LineData * linedata = malloc(sizeof(LineData));
+  initLineEdit(linedata);
+
+  char c;
   while (1) {
+    
 
     read(STDIN_FILENO, &c, 1);
     // if (iscntrl(c)) {
@@ -180,7 +232,7 @@ int main(void) {
     // }
     switch (c) {
     case 'q': // End the line edit proccess
-      endLineEdit(oldt);
+      endLineEdit(linedata->oldt);
       break;
     case '\033':
       // write(STDOUT_FILENO, "", 0);
@@ -191,6 +243,7 @@ int main(void) {
       handleDeletion(linedata);
       break;
     default:
+      //fprintf(file, "NEW LINE\n");
       handleNonControlChar(c, linedata); // handles non control characters
       break;
     }
