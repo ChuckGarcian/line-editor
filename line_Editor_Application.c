@@ -11,6 +11,7 @@
 #include "line_Editor.h"
 
 FILE *file;
+
 /*Moves the cursor to the given x and y variable*/
 void moveCursor(int x, int y) {
   int len = 100;
@@ -24,6 +25,7 @@ void moveCursor(int x, int y) {
 
   write(STDOUT_FILENO, str, strlen(str));
 }
+
 LineData * linedata;
 
 /*
@@ -70,75 +72,44 @@ int getCursor(int *x, int *y) {
 }
 //Todo fix it so that when deleting not at the max pos the  max position is updated correctly
 void handleDeletion(LineData *linedata) {
-
-  int col, row;
-  col = linedata->curP.x;
-  row = linedata->curP.y;
-  if (linedata->initP.x == col && linedata->initP.y == row)
-    return; // don't want to move cursor back more
-  col--;
-  if (col < 1) {
-    col = linedata->ws.ws_col;
-    row--;
+  if (linedata->cursIdex == linedata->ldb->startIndex) {
+    return;
+  } else {
+    linedata->cursIdex--;
   }
 
-  moveCursor(col, row);
-  linedata->curP.x = col;
-  linedata->curP.y = row;
-  linedata->maxP.x = col;
-  linedata->maxP.y = row;
+  // add buffer char deletion logic here
+  removeChar(linedata->ldb, linedata->cursIdex);
+  
 }
 
 // Todo make it add the change to the input buffer
 void handleNonControlChar(char c, LineData *linedata) {
-  linedata->maxP.x++;
-  linedata->curP.x++; 
-  if (linedata->maxP.x > linedata->ws.ws_col) {// Greater than the terminal col; make cursor new line
-    linedata->maxP.x = 1;
-    linedata->curP.x = 1;
-    linedata->maxP.y++;
-    linedata->curP.y++;
-  }
-  write(STDOUT_FILENO, &c, 1); // Non-control characters;
+  // add to buff instead
+  insertChar(linedata->ldb, c, linedata->cursIdex);
+  linedata->cursIdex++;
+  // write(STDOUT_FILENO, &c, 1); // Non-control characters;
 }
 
 /*Takes part of a control sequence and handles it; only for cursor control*/
 void handleCursorControl(char z, LineData *linedata) {
-  int col, row;
   char c;
   read(STDIN_FILENO, &c, 1); // To get rid of the '['
   read(STDIN_FILENO, &c, 1); // Now we can read in which key was pressed
-  
-  col = linedata->curP.x;
-  row = linedata->curP.y;
   switch (c) {
   case 'C': // Move cursor right
-    if (linedata->maxP.x == col && linedata->maxP.y == row) { // don't want to move cursor back more
+    if (linedata->ldb->startIndex == linedata->cursIdex) { // don't want to move cursor back more
       return;
-    } // needs to wrap around to line below 
-    else if (col == linedata->ws.ws_col && linedata->maxP.y != row) {
-      col = 1;
-      row++;
     } else {
-      col++;
+      linedata->cursIdex++;
     }
-  
-    moveCursor(col, row);
     break;
   case 'D': // Move cursor left
-    if (linedata->initP.x == col && linedata->initP.y == row) {// don't want to move cursor further more
+    if (linedata->ldb->startIndex == linedata->cursIdex) {// don't want to move cursor further more
       return;
-    } // cursor needs to wrap around to end of the line above 
-    else if (col == 1 && linedata->initP.y != row) {
-      row--;
-      col = linedata->ws.ws_col;
-
     } else {
-      col--;
+      linedata->cursIdex--;
     }
-
-   
-    moveCursor(col, row);
     break;
   case '\n':
     fprintf(file, "NEW LINE");
@@ -146,9 +117,6 @@ void handleCursorControl(char z, LineData *linedata) {
   default:
     break;
   }
-
-  linedata->curP.x = col;
-  linedata->curP.y = row;
 }
 
 // Sets settings back to their og state
@@ -203,8 +171,6 @@ void initLineEdit(LineData * linedata) {
   // Todo what happens when the user types more chars than the buffer has enough
   // to hold? Todo put This in an initilizer
 
-  linedata->buf = malloc(100);
-
   tcgetattr(STDIN_FILENO, &linedata->oldt);
 
   newt = linedata->oldt;
@@ -217,15 +183,73 @@ void initLineEdit(LineData * linedata) {
 
   
   ioctl( STDIN_FILENO, TIOCGWINSZ, &linedata->ws); // Stores terminal window size information into the struct
-  
-  getCursor(&linedata->initP.x, &linedata->initP.y);
-  linedata->maxP.x = linedata->initP.x;
-  linedata->maxP.y = linedata->initP.y;
-  
-  linedata->curP.x = linedata->initP.x;
-  linedata->curP.y = linedata->initP.y;
+
+  linedata->ldb = initLDBuff(100);
+  getCursor(&linedata->ldb->startIndex, &linedata->initP.y);
+  linedata->cursIdex = linedata->ldb->startIndex;
+  linedata->ldb->endIndex = linedata->initP.x = linedata->cursIdex;
+
 }
 #include <signal.h>
+
+void printAtPos(int col, int row) {
+  //int pid = fork();
+  setbuf(stdout, NULL);
+  char * outputBuf = malloc(300);
+  
+  int index = 0;
+  index += sprintf(outputBuf + index, "\033[?25l"); //hides the cursor
+  index += sprintf(outputBuf + index, "\033[%d;%dH", linedata->initP.y, linedata->initP.x); // moves it to the initial position
+  index += sprintf(outputBuf + index, "\033[J"); // clears screen starting at cursor
+  index += sprintf(outputBuf + index, linedata->ldb->strBuf + linedata->ldb->startIndex); //The editing buffer
+  index += sprintf(outputBuf + index, "\033[%d;%dH", row, col); // move cursor to desired position
+  index += sprintf(outputBuf + index, "\033[?25h"); // show cursor
+  outputBuf[index] = '\0'; // add a null terminator
+  fprintf(stdout, outputBuf);
+  free(outputBuf);
+
+  // if (pid == 0) {// Child
+  //   moveCursor(linedata->initP.x, linedata->initP.y);
+  //   fprintf(stdout, "\033[J");
+  //   fprintf(stdout, );
+  //   exit(0);
+  // } else if (pid > 0) {// parent
+  //   wait(NULL);
+  //   // put parent move cursor here
+  //   moveCursor(col, row);
+  //   return;
+  //}
+}
+
+void pushToConsole() {
+  int row, col;
+
+  // we need to translate from a 1d array cursor index to
+  // a 2d array pos
+  row = (linedata->cursIdex / linedata->ws.ws_col) + linedata->initP.y;
+  col = linedata->cursIdex % linedata->ws.ws_col;
+  fprintf(file, "ROW: %d, COL: %d \n", row, col);
+  fprintf(file, "buff: %s \n", toString(linedata->ldb));
+  printAtPos(col, row);
+
+
+ // write(STDOUT_FILENO,  strlen(linedata->ldb) + 1);
+  //moveCursor(col, row);
+
+  //write buffer
+}
+// int main(void) {
+//   ldBuffer * ldb = initLDBuff(100);
+
+//   insertChar(ldb, 'c', 0);
+//   insertChar(ldb, 'c', 0);
+//   printf("Test: %s \n", toString(ldb));
+//   removeChar(ldb, 0);
+//   printf("Test: %s \n", toString(ldb));
+//   insertChar(ldb, 'a', 1);
+//   printf("Test: %s \n", toString(ldb));
+// }
+
 // Todo I need to add a bufffer and then deletion powers
 int main(void) {
   write(STDOUT_FILENO, "utcsh> ", 8); // to imitate utcsh
@@ -234,8 +258,6 @@ int main(void) {
 
   char c;
   while (1) {
-    
-
     read(STDIN_FILENO, &c, 1);
     // if (iscntrl(c)) {
     //   fprintf(file, "%d\n", c);
@@ -259,5 +281,6 @@ int main(void) {
       handleNonControlChar(c, linedata); // handles non control characters
       break;
     }
+    pushToConsole();
   };
 }

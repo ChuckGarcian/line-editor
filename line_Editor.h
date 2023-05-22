@@ -2,7 +2,7 @@
 #include <termios.h>
 #include <unistd.h>
 #include <sys/ioctl.h>
-
+#include "buffer.h"
 /**
  * Reads an entire line from stdin; stores the address of the buffer
  * containing the text in the given 'lineptr' parameter
@@ -25,13 +25,14 @@ typedef struct pos {
 /*This struct should contain infromation related to the line editor*/
 typedef struct LineData {
   struct termios oldt; // orignal terminal settings
-  char *buf; // character buffer that getLine() returns when enter is pressed
+  ldBuffer * ldb; // character buffer that getLine() returns when enter is pressed
   struct winsize ws; // For terminal window size information into the struct
 
   // The start position that the cursor assumes with every
   // new line; the cursor may not move any more left of this
   // positoin
   cPos initP;
+  int cursIdex;
   int lineEndPos;
 
   // The end position of the current line; cursor may not
