@@ -79,7 +79,7 @@ void handleDeletion(LineData *linedata) {
   } 
   linedata->cursIdex--;
   // add buffer char deletion logic here
-  removeChar(linedata->ldb, linedata->cursIdex);
+  removeChar(linedata->ldb, linedata->cursIdex -  linedata->initP.x);
   
 }
 
