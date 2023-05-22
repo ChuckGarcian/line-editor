@@ -1,3 +1,5 @@
 get CURSOR
-x: 8, y: 3 
+x: 8, y: 2 
 Return: 2 
+WE ARE RESIZING!
+WE ARE RESIZING!

@@ -13,6 +13,7 @@
  */
 void get_line(char **lineptr);
 
+
 /*Struct for cursor position*/
 typedef struct pos {
   int x;

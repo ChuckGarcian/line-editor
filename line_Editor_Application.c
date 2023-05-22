@@ -24,6 +24,7 @@ void moveCursor(int x, int y) {
 
   write(STDOUT_FILENO, str, strlen(str));
 }
+LineData * linedata;
 
 /*
   Puts the y and x postions of the mouse into the given x and y
@@ -67,7 +68,7 @@ int getCursor(int *x, int *y) {
   fprintf(file, "Return: %d \n", ret);
   return 0;
 }
-
+//Todo fix it so that when deleting not at the max pos the  max position is updated correctly
 void handleDeletion(LineData *linedata) {
 
   int col, row;
@@ -158,12 +159,15 @@ void endLineEdit(struct termios oldt) {
   exit(0);
 }
 
+
+
 /* Handles the nescarry updates to display when terimnal
   when the resize signal is recieved; 
 */
 void terminalResizeSigHandler(int) {
   fprintf(file, "WE ARE RESIZING!\n");
-
+  // To update the window size values
+  ioctl( STDIN_FILENO, TIOCGWINSZ, &linedata->ws);
 }
 
 /*
@@ -225,7 +229,7 @@ void initLineEdit(LineData * linedata) {
 // Todo I need to add a bufffer and then deletion powers
 int main(void) {
   write(STDOUT_FILENO, "utcsh> ", 8); // to imitate utcsh
-  LineData * linedata = malloc(sizeof(LineData));
+  linedata = malloc(sizeof(LineData));
   initLineEdit(linedata);
 
   char c;
