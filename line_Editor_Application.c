@@ -13,6 +13,7 @@
 FILE *file;
 
 /*Moves the cursor to the given x and y variable*/
+/*
 void moveCursor(int x, int y) {
   int len = 100;
   char str[len];
@@ -25,6 +26,7 @@ void moveCursor(int x, int y) {
 
   write(STDOUT_FILENO, str, strlen(str));
 }
+*/
 
 LineData * linedata;
 
@@ -72,12 +74,10 @@ int getCursor(int *x, int *y) {
 }
 //Todo fix it so that when deleting not at the max pos the  max position is updated correctly
 void handleDeletion(LineData *linedata) {
-  if (linedata->cursIdex == linedata->ldb->startIndex) {
+  if (linedata->cursIdex == linedata->initP.x) {
     return;
-  } else {
-    linedata->cursIdex--;
-  }
-
+  } 
+  linedata->cursIdex--;
   // add buffer char deletion logic here
   removeChar(linedata->ldb, linedata->cursIdex);
   
@@ -86,7 +86,9 @@ void handleDeletion(LineData *linedata) {
 // Todo make it add the change to the input buffer
 void handleNonControlChar(char c, LineData *linedata) {
   // add to buff instead
-  insertChar(linedata->ldb, c, linedata->cursIdex);
+
+  insertChar(linedata->ldb, c, linedata->cursIdex -  linedata->initP.x);
+
   linedata->cursIdex++;
   // write(STDOUT_FILENO, &c, 1); // Non-control characters;
 }
@@ -98,14 +100,14 @@ void handleCursorControl(char z, LineData *linedata) {
   read(STDIN_FILENO, &c, 1); // Now we can read in which key was pressed
   switch (c) {
   case 'C': // Move cursor right
-    if (linedata->ldb->startIndex == linedata->cursIdex) { // don't want to move cursor back more
+    if (linedata->cursIdex == linedata->ldb->endIndex) { // don't want to move cursor back more
       return;
     } else {
       linedata->cursIdex++;
     }
     break;
   case 'D': // Move cursor left
-    if (linedata->ldb->startIndex == linedata->cursIdex) {// don't want to move cursor further more
+    if (linedata->initP.x == linedata->cursIdex) {// don't want to move cursor further more
       return;
     } else {
       linedata->cursIdex--;
@@ -185,40 +187,28 @@ void initLineEdit(LineData * linedata) {
   ioctl( STDIN_FILENO, TIOCGWINSZ, &linedata->ws); // Stores terminal window size information into the struct
 
   linedata->ldb = initLDBuff(100);
-  getCursor(&linedata->ldb->startIndex, &linedata->initP.y);
-  linedata->cursIdex = linedata->ldb->startIndex;
+  getCursor(&linedata->initP.x, &linedata->initP.y);
+  linedata->cursIdex = linedata->initP.x;
   linedata->ldb->endIndex = linedata->initP.x = linedata->cursIdex;
 
 }
 #include <signal.h>
 
 void printAtPos(int col, int row) {
-  //int pid = fork();
-  setbuf(stdout, NULL);
+  setbuf(stdout, NULL); 
   char * outputBuf = malloc(300);
   
   int index = 0;
   index += sprintf(outputBuf + index, "\033[?25l"); //hides the cursor
   index += sprintf(outputBuf + index, "\033[%d;%dH", linedata->initP.y, linedata->initP.x); // moves it to the initial position
   index += sprintf(outputBuf + index, "\033[J"); // clears screen starting at cursor
-  index += sprintf(outputBuf + index, linedata->ldb->strBuf + linedata->ldb->startIndex); //The editing buffer
+  index += sprintf(outputBuf + index, linedata->ldb->strBuf); //The editing buffer
   index += sprintf(outputBuf + index, "\033[%d;%dH", row, col); // move cursor to desired position
   index += sprintf(outputBuf + index, "\033[?25h"); // show cursor
   outputBuf[index] = '\0'; // add a null terminator
-  fprintf(stdout, outputBuf);
-  free(outputBuf);
 
-  // if (pid == 0) {// Child
-  //   moveCursor(linedata->initP.x, linedata->initP.y);
-  //   fprintf(stdout, "\033[J");
-  //   fprintf(stdout, );
-  //   exit(0);
-  // } else if (pid > 0) {// parent
-  //   wait(NULL);
-  //   // put parent move cursor here
-  //   moveCursor(col, row);
-  //   return;
-  //}
+  write(STDOUT_FILENO, outputBuf, index + 1); // The index should now contain the total num chars
+  free(outputBuf);
 }
 
 void pushToConsole() {
@@ -229,7 +219,7 @@ void pushToConsole() {
   row = (linedata->cursIdex / linedata->ws.ws_col) + linedata->initP.y;
   col = linedata->cursIdex % linedata->ws.ws_col;
   fprintf(file, "ROW: %d, COL: %d \n", row, col);
-  fprintf(file, "buff: %s \n", toString(linedata->ldb));
+  
   printAtPos(col, row);
 
 
