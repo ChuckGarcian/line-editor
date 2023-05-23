@@ -42,4 +42,6 @@ typedef struct LineData {
 
   // Current cursor position
   cPos curP;
+
+
 } LineData;

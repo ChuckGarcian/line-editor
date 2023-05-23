@@ -2,6 +2,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+#ifndef BUFF_H
+#define BUFF_H
+
 // the line editor buffer
 typedef struct ldBuffer {
     char * strBuf; 
@@ -26,3 +29,5 @@ int size(ldBuffer * ldBuf);
 
 /*initiates and returns a pointer to an ld buffer; takes initial capacity*/
 ldBuffer * initLDBuff(int initCapacity);
+
+#endif

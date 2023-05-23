@@ -12,6 +12,7 @@
 
 #include "EventDispatch/KeyPressEventDispatcher.h"
 #include "line_Editor.h"
+#include "HQueue.h"
 
 //#define DEBUG
 #ifdef DEBUG
@@ -100,6 +101,14 @@ void handleControl(event event) {
     } else {
       linedata->cursIdex--;
     }
+    break;
+  case UP_ARROW: // update editing buffer to element in history Queue
+    //qpUp();  //move quepointer up
+    //linedata->ldb = Hpeek();
+    break;
+  case DOWN_ARROW:
+   // qpDown();
+    //linedata->ldb = Hpeek();
     break;
   case DELETE:
     if (linedata->cursIdex == linedata->ldb->endIndex) {
@@ -214,10 +223,12 @@ void initLineEdit() {
   ioctl(STDIN_FILENO, TIOCGWINSZ, &linedata->ws); // Stores terminal window size information into the struct
   // initialize the keypress event disptacher
 
-
+  initHQueue(); //History queue for storing previus ldBuffers
   initDispatcher('q'); // TODO make 'q' a macro 
   
-  linedata->ldb = initLDBuff(100);
+  linedata->ldb = initLDBuff(100); // Line editing buffer; all text gets stored here
+  HupdateCurrentBuffer(linedata->ldb);
+
   linedata->ldb->endIndex = linedata->initP.x = linedata->cursIdex;
 }
 
@@ -233,33 +244,6 @@ int main(void) {
       pushToConsole();      
     }
   }
-
-  /*while (1) {
-    read(STDIN_FILENO, &c, 1);
-    // if (iscntrl(c)) {
-    //   fprintf(file, "%d\n", c);
-    // } else {
-    //   fprintf(file, "%d ('%c')\n", c, c);
-    // }
-    switch (c) {
-    case 'q': // End the line edit proccess
-      endLineEdit(linedata->oldt);
-      break;
-    case '\033':
-      // write(STDOUT_FILENO, "", 0);
-      // fprintf(file, "HandlingCursorControl \n");
-      handleCursorControl(c, linedata);
-      break;
-    case 127: // Back space
-      handleDeletion(linedata);
-      break;
-    default:
-      // fprintf(file, "NEW LINE\n");
-      handleNonControlChar(c, linedata); // handles non control characters
-      break;
-    }
-  };
-  */
 }
 
 
