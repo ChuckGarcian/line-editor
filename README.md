@@ -1,2 +1,3 @@
 # line-editor for single
-fdasf
+
+Seperate stdin reads and stdout writes 

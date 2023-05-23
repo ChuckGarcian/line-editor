@@ -1,0 +1,11 @@
+{
+    "files.associations": {
+        "stdio.h": "c",
+        "unistd.h": "c",
+        "vector": "c",
+        "buffer": "c",
+        "chrono": "c",
+        "queue.h": "c",
+        "keypresseventdispatcher.h": "c"
+    }
+}
