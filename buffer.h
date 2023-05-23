@@ -28,6 +28,6 @@ int size(ldBuffer * ldBuf);
 
 
 /*initiates and returns a pointer to an ld buffer; takes initial capacity*/
-ldBuffer * initLDBuff(int initCapacity);
+void initLDBuff(ldBuffer ** ldb, int initCapacity);
 
 #endif

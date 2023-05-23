@@ -1,0 +1,114 @@
+execve("./ldp", ["./ldp"], 0x7ffe713168e0 /* 30 vars */) = 0
+brk(NULL)                               = 0x556cbd844000
+arch_prctl(0x3001 /* ARCH_??? */, 0x7ffc141fdd90) = -1 EINVAL (Invalid argument)
+mmap(NULL, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f68b3f06000
+access("/etc/ld.so.preload", R_OK)      = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "/etc/ld.so.cache", O_RDONLY|O_CLOEXEC) = 3
+newfstatat(3, "", {st_mode=S_IFREG|0644, st_size=40895, ...}, AT_EMPTY_PATH) = 0
+mmap(NULL, 40895, PROT_READ, MAP_PRIVATE, 3, 0) = 0x7f68b3efc000
+close(3)                                = 0
+openat(AT_FDCWD, "/lib/x86_64-linux-gnu/libc.so.6", O_RDONLY|O_CLOEXEC) = 3
+read(3, "\177ELF\2\1\1\3\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0P\237\2\0\0\0\0\0"..., 832) = 832
+pread64(3, "\6\0\0\0\4\0\0\0@\0\0\0\0\0\0\0@\0\0\0\0\0\0\0@\0\0\0\0\0\0\0"..., 784, 64) = 784
+pread64(3, "\4\0\0\0 \0\0\0\5\0\0\0GNU\0\2\0\0\300\4\0\0\0\3\0\0\0\0\0\0\0"..., 48, 848) = 48
+pread64(3, "\4\0\0\0\24\0\0\0\3\0\0\0GNU\0i8\235HZ\227\223\333\350s\360\352,\223\340."..., 68, 896) = 68
+newfstatat(3, "", {st_mode=S_IFREG|0644, st_size=2216304, ...}, AT_EMPTY_PATH) = 0
+pread64(3, "\6\0\0\0\4\0\0\0@\0\0\0\0\0\0\0@\0\0\0\0\0\0\0@\0\0\0\0\0\0\0"..., 784, 64) = 784
+mmap(NULL, 2260560, PROT_READ, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0x7f68b3cd4000
+mmap(0x7f68b3cfc000, 1658880, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x28000) = 0x7f68b3cfc000
+mmap(0x7f68b3e91000, 360448, PROT_READ, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x1bd000) = 0x7f68b3e91000
+mmap(0x7f68b3ee9000, 24576, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x214000) = 0x7f68b3ee9000
+mmap(0x7f68b3eef000, 52816, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x7f68b3eef000
+close(3)                                = 0
+mmap(NULL, 12288, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f68b3cd1000
+arch_prctl(ARCH_SET_FS, 0x7f68b3cd1740) = 0
+set_tid_address(0x7f68b3cd1a10)         = 18896
+set_robust_list(0x7f68b3cd1a20, 24)     = 0
+rseq(0x7f68b3cd20e0, 0x20, 0, 0x53053053) = 0
+mprotect(0x7f68b3ee9000, 16384, PROT_READ) = 0
+mprotect(0x556cbb9ce000, 4096, PROT_READ) = 0
+mprotect(0x7f68b3f40000, 8192, PROT_READ) = 0
+prlimit64(0, RLIMIT_STACK, NULL, {rlim_cur=8192*1024, rlim_max=RLIM64_INFINITY}) = 0
+munmap(0x7f68b3efc000, 40895)           = 0
+rt_sigaction(SIGWINCH, {sa_handler=0x556cbb9cb84d, sa_mask=[], sa_flags=SA_RESTORER, sa_restorer=0x7f68b3d16520}, NULL, 8) = 0
+getrandom("\xd4\x45\x89\x9f\xa2\x89\x27\xcd", 8, GRND_NONBLOCK) = 8
+brk(NULL)                               = 0x556cbd844000
+brk(0x556cbd865000)                     = 0x556cbd865000
+ioctl(0, TCGETS, {B38400 opost isig icanon echo ...}) = 0
+ioctl(0, TCGETS, {B38400 opost isig icanon echo ...}) = 0
+ioctl(0, SNDCTL_TMR_START or TCSETS, {B38400 -opost -isig -icanon -echo ...}) = 0
+ioctl(0, TCGETS, {B38400 -opost -isig -icanon -echo ...}) = 0
+write(1, "\33[6n\0", 5)                 = 5
+read(0, "\33", 1)                       = 1
+read(0, "[", 1)                         = 1
+read(0, "3", 1)                         = 1
+read(0, ";", 1)                         = 1
+read(0, "1", 1)                         = 1
+read(0, "R", 1)                         = 1
+ioctl(0, TCGETS, {B38400 -opost -isig -icanon -echo ...}) = 0
+ioctl(0, SNDCTL_TMR_START or TCSETS, {B38400 opost isig icanon echo ...}) = 0
+ioctl(0, TCGETS, {B38400 opost isig icanon echo ...}) = 0
+ioctl(0, TIOCGWINSZ, {ws_row=11, ws_col=164, ws_xpixel=0, ws_ypixel=0}) = 0
+ioctl(0, TCGETS, {B38400 opost isig icanon echo ...}) = 0
+ioctl(0, TCGETS, {B38400 opost isig icanon echo ...}) = 0
+ioctl(0, SNDCTL_TMR_START or TCSETS, {B38400 -opost -isig -icanon -echo ...}) = 0
+ioctl(0, TCGETS, {B38400 -opost -isig -icanon -echo ...}) = 0
+rt_sigaction(SIGRT_1, {sa_handler=0x7f68b3d658f0, sa_mask=[], sa_flags=SA_RESTORER|SA_ONSTACK|SA_RESTART|SA_SIGINFO, sa_restorer=0x7f68b3d16520}, NULL, 8) = 0
+rt_sigprocmask(SIG_UNBLOCK, [RTMIN RT_1], NULL, 8) = 0
+mmap(NULL, 8392704, PROT_NONE, MAP_PRIVATE|MAP_ANONYMOUS|MAP_STACK, -1, 0) = 0x7f68b34d0000
+mprotect(0x7f68b34d1000, 8388608, PROT_READ|PROT_WRITE) = 0
+rt_sigprocmask(SIG_BLOCK, ~[], [], 8)   = 0
+clone3({flags=CLONE_VM|CLONE_FS|CLONE_FILES|CLONE_SIGHAND|CLONE_THREAD|CLONE_SYSVSEM|CLONE_SETTLS|CLONE_PARENT_SETTID|CLONE_CHILD_CLEARTID, child_tid=0x7f68b3cd0910, parent_tid=0x7f68b3cd0910, exit_signal=0, stack=0x7f68b34d0000, stack_size=0x7fff00, tls=0x7f68b3cd0640} => {parent_tid=[18897]}, 88) = 18897
+rt_sigprocmask(SIG_SETMASK, [], NULL, 8) = 0
+openat(AT_FDCWD, "log1.txt", O_WRONLY|O_CREAT|O_TRUNC, 0666) = 3
+write(1, "\33[?25l\33[3;1H\33[Jl\33[3;2H\33[?25h\0", 29) = 29
+write(1, "\33[?25l\33[3;1H\33[Jld\33[3;3H\33[?25h\0", 30) = 30
+write(1, "\33[?25l\33[3;1H\33[Jldp\33[3;4H\33[?25h\0", 31) = 31
+write(1, "\33[?25l\33[3;1H\33[Jldpc\33[3;5H\33[?25h\0", 32) = 32
+write(1, "\33[?25l\33[3;1H\33[Jldpch\33[3;6H\33[?25h"..., 33) = 33
+write(1, "\33[?25l\33[3;1H\33[Jldpchu\33[3;7H\33[?25"..., 34) = 34
+write(1, "\33[?25l\33[3;1H\33[Jldpchuc\33[3;8H\33[?2"..., 35) = 35
+write(1, "\33[?25l\33[3;1H\33[Jldpchuck\33[3;9H\33[?"..., 36) = 36
+ioctl(0, TCGETS, {B38400 -opost -isig -icanon -echo ...}) = 0
+ioctl(0, SNDCTL_TMR_START or TCSETS, {B38400 opost isig icanon echo ...}) = 0
+ioctl(0, TCGETS, {B38400 opost isig icanon echo ...}) = 0
+write(1, "\n", 1)                       = 1
+write(1, "hello", 5)                    = 5
+rt_sigaction(SIGWINCH, {sa_handler=0x556cbb9cb84d, sa_mask=[], sa_flags=SA_RESTORER, sa_restorer=0x7f68b3d16520}, NULL, 8) = 0
+ioctl(0, TCGETS, {B38400 opost isig icanon echo ...}) = 0
+ioctl(0, TCGETS, {B38400 opost isig icanon echo ...}) = 0
+ioctl(0, SNDCTL_TMR_START or TCSETS, {B38400 -opost -isig -icanon -echo ...}) = 0
+ioctl(0, TCGETS, {B38400 -opost -isig -icanon -echo ...}) = 0
+write(1, "\33[6n\0", 5)                 = 5
+read(0, "\33", 1)                       = 1
+read(0, "[", 1)                         = 1
+read(0, "4", 1)                         = 1
+read(0, ";", 1)                         = 1
+read(0, "6", 1)                         = 1
+read(0, "R", 1)                         = 1
+ioctl(0, TCGETS, {B38400 -opost -isig -icanon -echo ...}) = 0
+ioctl(0, SNDCTL_TMR_START or TCSETS, {B38400 opost isig icanon echo ...}) = 0
+ioctl(0, TCGETS, {B38400 opost isig icanon echo ...}) = 0
+ioctl(0, TIOCGWINSZ, {ws_row=11, ws_col=164, ws_xpixel=0, ws_ypixel=0}) = 0
+ioctl(0, TCGETS, {B38400 opost isig icanon echo ...}) = 0
+ioctl(0, TCGETS, {B38400 opost isig icanon echo ...}) = 0
+ioctl(0, SNDCTL_TMR_START or TCSETS, {B38400 -opost -isig -icanon -echo ...}) = 0
+ioctl(0, TCGETS, {B38400 -opost -isig -icanon -echo ...}) = 0
+mmap(NULL, 8392704, PROT_NONE, MAP_PRIVATE|MAP_ANONYMOUS|MAP_STACK, -1, 0) = 0x7f68b2ccf000
+mprotect(0x7f68b2cd0000, 8388608, PROT_READ|PROT_WRITE) = 0
+rt_sigprocmask(SIG_BLOCK, ~[], [], 8)   = 0
+clone3({flags=CLONE_VM|CLONE_FS|CLONE_FILES|CLONE_SIGHAND|CLONE_THREAD|CLONE_SYSVSEM|CLONE_SETTLS|CLONE_PARENT_SETTID|CLONE_CHILD_CLEARTID, child_tid=0x7f68b34cf910, parent_tid=0x7f68b34cf910, exit_signal=0, stack=0x7f68b2ccf000, stack_size=0x7fff00, tls=0x7f68b34cf640} => {parent_tid=[18984]}, 88) = 18984
+rt_sigprocmask(SIG_SETMASK, [], NULL, 8) = 0
+openat(AT_FDCWD, "log1.txt", O_WRONLY|O_CREAT|O_TRUNC, 0666) = 4
+write(1, "\33[?25l\33[4;6H\33[Jc\340\334\356\263h\177\33[4;7H\33[?2"..., 35) = 35
+write(1, "\33[?25l\33[4;6H\33[Jch\340\334\356\263h\177\340\334\356\263h\177\33[4"..., 42) = 42
+write(1, "\33[?25l\33[4;6H\33[Jchu\340\334\356\263h\177\334\356\263h\177\33[4"..., 42) = 42
+write(1, "\33[?25l\33[4;6H\33[Jchuc\340\334\356\263h\177\356\263h\177\33[4"..., 43) = 43
+write(1, "\33[?25l\33[4;6H\33[Jchuck\340\334\356\263h\177\263h\177\33[4"..., 43) = 43
+write(1, "\33[?25l\33[4;6H\33[Jchuckk\340\334\356\263h\177h\177\33[4"..., 43) = 43
+write(1, "\33[?25l\33[4;6H\33[Jchuckkk\340\334\356\263h\177\177\33[4"..., 43) = 43
+ioctl(0, TCGETS, {B38400 -opost -isig -icanon -echo ...}) = 0
+ioctl(0, SNDCTL_TMR_START or TCSETS, {B38400 opost isig icanon echo ...}) = 0
+ioctl(0, TCGETS, {B38400 opost isig icanon echo ...}) = 0
+exit_group(1)                           = ?
++++ exited with 1 +++

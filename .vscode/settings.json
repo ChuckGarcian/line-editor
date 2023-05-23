@@ -6,6 +6,8 @@
         "buffer": "c",
         "chrono": "c",
         "queue.h": "c",
-        "keypresseventdispatcher.h": "c"
+        "keypresseventdispatcher.h": "c",
+        "stdbool.h": "c",
+        "line_editor.h": "c"
     }
 }

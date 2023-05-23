@@ -3,6 +3,7 @@
 #include <unistd.h>
 #include <sys/ioctl.h>
 #include "buffer.h"
+#include <stdbool.h>
 /**
  * Reads an entire line from stdin; stores the address of the buffer
  * containing the text in the given 'lineptr' parameter
@@ -43,5 +44,13 @@ typedef struct LineData {
   // Current cursor position
   cPos curP;
 
+  bool terminate; // used to ditect when to terminate the line editing proccess
+
 
 } LineData;
+
+/*
+  Line Editor stores the address of the buffer containing the inputed terminal text string once
+  enter has been pressed
+*/
+void ldGetLine(char ** lineptr);

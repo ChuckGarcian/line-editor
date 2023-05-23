@@ -9,29 +9,43 @@
 
 #define capacity 10 /*Capcity of the history stack*/
 
-ldBuffer *con[capacity];
-ldBuffer * currentldBuffer; // a container for storing the current editing bufffer 
-int Hsize; 
-int endIndex;
-int HQueuePointer; /*History qeueue pointer; effects the ldBuffer returned when peek is called
+#define DEBUG
+#ifdef DEBUG
+FILE *file;
+#endif
 
+static ldBuffer * con[capacity];
+static ldBuffer * currentldBuffer; // a container for storing the current editing bufffer 
+static int Hsize; 
+static int endIndex;
+int HQueuePointer; /*History qeueue pointer; effects the ldBuffer returned when peek is called */
+static int isInitialized = 0;  // new flag to indicate whether the queue has been initialized
 /*Initilizes history stack data structure*/
 void initHQueue() {
     HQueuePointer = -1; //HqeuePointer is kept relative to zero 
-    Hsize = 0;
-    endIndex = 0;
+    if (isInitialized == 0) {
+          #ifdef DEBUG
+        file = fopen("HqueDebugLog.txt", "w");
+        setbuf(file, NULL);
+        #endif 
+        Hsize = 0;
+        endIndex = -1;
+        isInitialized = 1;
+    }
 }
 
 //Moves queue pointer up
 void qpUp() {
-    if (HQueuePointer < Hsize - 1) {
+    // Only increase the pointer if the queue is not empty and 
+    // it is less than the current size
+    if (Hsize != 0 && HQueuePointer < Hsize - 1) {
         HQueuePointer++;
     }
 }
 
 // Moves queue pointer down
 void qpDown() {
-    if (HQueuePointer != -1) {
+    if (Hsize != 0 && HQueuePointer != -1) {
         HQueuePointer--;
     }
 }
@@ -57,18 +71,27 @@ ldBuffer *Hpeek() {
   
     /* HqeuePointer is kept relative to zero; Thus when utilizing it for peek it must be translated such 
     that it is kept relative to endIndex and we access the proper element; IE treat endIndex as a bias*/
-    if (HQueuePointer == -1) {return currentldBuffer;}
     int biasedQueuePointer = endIndex - HQueuePointer; 
     biasedQueuePointer = biasedQueuePointer % capacity;
+    biasedQueuePointer += (biasedQueuePointer < 0) ? capacity : 0;
 
+    // fprintf(file, "EndInex: %d \n", endIndex);
+    // fprintf(file,"HQueuePointer: %d \n", HQueuePointer);
+    // fprintf(file,"size: %d \n", Hsize);
+    //  fprintf(file,"biasedQueuePointer: %d \n", biasedQueuePointer);
     return con[biasedQueuePointer];
 }
 
 /*Takes an ldBuffer and pushes to stack*/
 void Henqueue(ldBuffer *ldb) {
   if (Hsize != capacity) {Hsize++;}
+    
+                 // add to internal array
   endIndex = (endIndex + 1) % capacity; // update header index
-  con[endIndex] = ldb;                  // add to internal array
+  con[endIndex] = ldb;   
+    fprintf(file, "EndInex: %d \n", endIndex);
+    fprintf(file,"HQueuePointer: %d \n", HQueuePointer);
+    fprintf(file,"size: %d \n", Hsize);
 }
 
 // /*Frees and destroys History* Buffer*/

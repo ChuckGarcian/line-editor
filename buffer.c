@@ -1,5 +1,5 @@
 #include "buffer.h"
-
+#define DEBUG
 int debug;
 FILE * f;
 
@@ -13,24 +13,36 @@ void insertChar(ldBuffer *ldBuf, char c, int index) {
     resize(ldBuf);
   }
 
+  #ifdef DEBUG
+   fprintf(f, "Before inesert: %s \n", ldBuf->strBuf);
+  #endif
+
   // shift elements at pos and greater down 1 spot in array
   for (int i = ldBuf->endIndex; i > index; i--) {
     ldBuf->strBuf[i] = ldBuf->strBuf[i-1];
   }
-
+  #ifdef DEBUG
+  fprintf(f, "after: %s \n", ldBuf->strBuf);
+  #endif
   // now we put the give char in the freed up slot
   ldBuf->strBuf[index] = c;
   ldBuf->endIndex++;
 }
 
 /*initiates and returns a pointer to an ld buffer; takes initial capacity*/
-ldBuffer * initLDBuff(int initCapacity) {
-    ldBuffer * res = malloc(sizeof(ldBuffer));
-    res->strBuf = malloc(initCapacity);
-    res->capacity = initCapacity;
-    res->endIndex = 0;
+void initLDBuff(ldBuffer ** ldb, int initCapacity) {
+    #ifdef DEBUG
     f = fopen("log1.txt", "w");
-    return res;
+    setbuf(f, NULL);
+    #endif
+    *ldb = malloc(sizeof(ldBuffer));
+    (*ldb)->strBuf = calloc(1, initCapacity);
+    (*ldb)->capacity = initCapacity;
+    (*ldb)->endIndex = 0;
+    #ifdef DEBUG
+    fprintf(f, "Before: %s \n", (*ldb)->strBuf);
+    #endif
+    
 }
 
 /*Removes the char at the given index*/

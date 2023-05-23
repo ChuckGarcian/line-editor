@@ -9,6 +9,7 @@
 #include <termios.h>
 #include <unistd.h>
 #include <assert.h>
+#include <stdbool.h>
 
 #include "EventDispatch/KeyPressEventDispatcher.h"
 #include "line_Editor.h"
@@ -19,7 +20,6 @@
 FILE *file;
 #endif
 LineData *linedata;
-
 /*
   Puts the y and x postions of the mouse into the given x and y
   variables passed as pointers
@@ -103,12 +103,14 @@ void handleControl(event event) {
     }
     break;
   case UP_ARROW: // update editing buffer to element in history Queue
-    //qpUp();  //move quepointer up
-    //linedata->ldb = Hpeek();
+    qpUp();  //move quepointer up
+    linedata->ldb = Hpeek();
+    linedata->cursIdex = linedata->ldb->endIndex; // Moves the cursor to the end
     break;
   case DOWN_ARROW:
-   // qpDown();
-    //linedata->ldb = Hpeek();
+    qpDown();
+    linedata->ldb = Hpeek();
+    linedata->cursIdex =linedata->ldb->endIndex; // Moves the cursor to the end
     break;
   case DELETE:
     if (linedata->cursIdex == linedata->ldb->endIndex) {
@@ -129,12 +131,34 @@ void handleControl(event event) {
   }
 }
 
-/*Terminates the line editing proccesses*/
-void endLineEdit() {
-  // Todo destroy buffer
+/*
+  This function is called when enter key is pressed; The address of the editing buffer
+  is assiged to the given pointer from getLine();
+ 
+  The event dispatcher terminated IE program is set back to cooked mode
+  */
+void terminateLineEditor() {
+ // write(STDOUT_FILENO, "\n", 1); // Moves to new line
   terminateDispatcher();
-  write(STDOUT_FILENO, "\n", 1);
+  printf("\n");
+  linedata->terminate = true; // getLine() will no longer loop and we return to original call site
+  return;
+}
+
+/*
+  Frees the resources and data structures used by this editor;
+  Should only be called when the calling site is going to exit;
+
+  Most importantly this func frees and destroys the History editing buffer queue;
+  IE previus editing buffers will be lost.
+*/
+void destroyLineEditor() {
+  terminateDispatcher();
+  //Add here frees and destroys from varius data structures here
+  printf("\n");
+  //write(STDOUT_FILENO, "\n", 1);
   exit(0);
+ 
 }
 
 /* Handles the nescarry updates to display when terimnal
@@ -149,13 +173,19 @@ void terminalResizeSigHandler(int) {
   ioctl(STDIN_FILENO, TIOCGWINSZ, &linedata->ws);
 }
 
-
 /*Handles and procceses all key events*/
 void handleEvents(event event) {
   switch (event.eventType) {
       case QUIT_SEQUENCE:
-        endLineEdit();
+        terminateDispatcher();
         exit(1);
+        //destroyLineEditor();       
+        
+        //destroyLineEditor();
+        break;
+      case ENTER:
+        terminateLineEditor();
+       // terminateLineEditor();
         break;
       case NON_CONTROL:
         handleNonControl(event.kp);
@@ -168,6 +198,7 @@ void handleEvents(event event) {
 
 /*prints the internal editing buffer to console and correctly positions cursor*/
 void pushToConsole() {
+  if (linedata->terminate == true) {return;}
   int row, col;
   // we need to translate from a 1d array cursor index to
   // a 2d array pos
@@ -188,7 +219,7 @@ void pushToConsole() {
   index +=
       sprintf(outputBuf + index, "\033[J"); // clears screen starting at cursor
   index +=
-      sprintf(outputBuf + index, linedata->ldb->strBuf); // The editing buffer
+      sprintf(outputBuf + index, "%s", (char *) linedata->ldb->strBuf); // The editing buffer
   index += sprintf(outputBuf + index, "\033[%d;%dH", row,
                    col); // move cursor to desired position
   index += sprintf(outputBuf + index, "\033[?25h"); // show cursor
@@ -212,7 +243,9 @@ void initLineEdit() {
   file = fopen("LineEditorLog.txt", "w");
   setbuf(file, NULL);
 #endif
-
+// file = fopen("LineEditorLog.txt", "w");
+//   setbuf(file, NULL);
+  // fprintf(file, "QUIT SEQ");
   linedata = malloc(sizeof(LineData));
 
   
@@ -223,29 +256,38 @@ void initLineEdit() {
   ioctl(STDIN_FILENO, TIOCGWINSZ, &linedata->ws); // Stores terminal window size information into the struct
   // initialize the keypress event disptacher
 
-  initHQueue(); //History queue for storing previus ldBuffers
+  initHQueue(); //Static History queue for storing previus ldBuffers
   initDispatcher('q'); // TODO make 'q' a macro 
-  
-  linedata->ldb = initLDBuff(100); // Line editing buffer; all text gets stored here
+  initLDBuff(&linedata->ldb, 100); // Line editing buffer; all text/char gets stored here
   HupdateCurrentBuffer(linedata->ldb);
 
   linedata->ldb->endIndex = linedata->initP.x = linedata->cursIdex;
+  linedata->terminate = false;
 }
 
-int main(void) {
-  write(STDOUT_FILENO, "utcsh> ", 8); // to imitate utcsh
+/*
+  Line Editor stores the address of the buffer containing the inputed terminal text string once
+  enter has been pressed; calling proccess must free lineptr.
+*/
+void ldGetLine(char ** lineptr) {
   initLineEdit();
   event event; // struct that contains key event info
 
   // Todo add catagory field to filter between control events and typing events
-  while (1) {
+  while (linedata->terminate == false) {
     if (pollEvent(&event) == 1) {
       handleEvents(event);
       pushToConsole();      
     }
   }
-}
 
+  Henqueue(linedata->ldb); // Enqueue the editing buffer to history queue
+  linedata->ldb->strBuf[linedata->ldb->endIndex] = '\0'; // add the null terminator
+
+  *lineptr = malloc(strlen(linedata->ldb->strBuf) + 1);
+  strcpy(*lineptr, linedata->ldb->strBuf);
+  
+}
 
 /*
 on initlization save the number of characters for 'prefix';
