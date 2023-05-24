@@ -11,7 +11,8 @@
 #include <assert.h>
 #include <stdbool.h>
 
-#include "EventDispatch/KeyPressEventDispatcher.h"
+#include "KeyPressEventDispatcher.h"
+
 #include "line_Editor.h"
 #include "HQueue.h"
 
@@ -141,6 +142,7 @@ void terminateLineEditor() {
  // write(STDOUT_FILENO, "\n", 1); // Moves to new line
   terminateDispatcher();
   printf("\n");
+  fflush(stdout);
   linedata->terminate = true; // getLine() will no longer loop and we return to original call site
   return;
 }
@@ -156,6 +158,7 @@ void destroyLineEditor() {
   terminateDispatcher();
   //Add here frees and destroys from varius data structures here
   printf("\n");
+  fflush(stdout);
   //write(STDOUT_FILENO, "\n", 1);
   exit(0);
  
@@ -176,6 +179,7 @@ void terminalResizeSigHandler(int) {
 /*Handles and procceses all key events*/
 void handleEvents(event event) {
   switch (event.eventType) {
+    //Todo the bottom 3 should not be here. it doesnt make sense to have control outside of the noncontrol function
       case QUIT_SEQUENCE:
         terminateDispatcher();
         exit(1);
@@ -186,6 +190,9 @@ void handleEvents(event event) {
       case ENTER:
         terminateLineEditor();
        // terminateLineEditor();
+        break;
+      case END_OF_LINE: // Control + C
+        destroyLineEditor();
         break;
       case NON_CONTROL:
         handleNonControl(event.kp);
@@ -270,6 +277,7 @@ void initLineEdit() {
   enter has been pressed; calling proccess must free lineptr.
 */
 void ldGetLine(char ** lineptr) {
+  fflush(stdout);
   initLineEdit();
   event event; // struct that contains key event info
 
